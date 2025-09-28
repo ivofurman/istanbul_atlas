@@ -257,6 +257,44 @@
       transition: width 0s;
       box-shadow: 0 0 10px #e96e3633 inset;
     }
+    /* Leaflet tooltip and popup theme for dark mode */
+    .leaflet-tooltip,
+    .leaflet-popup-content-wrapper,
+    .leaflet-popup-tip {
+      background: #232635 !important;
+      color: #ffbe7b !important;
+      border-radius: 12px !important;
+      border: 2px solid #e96e36 !important;
+      box-shadow: 0 4px 24px #000a, 0 1.5px 0 #181a21;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    .leaflet-tooltip {
+      color: #f2efe9 !important;
+      border: 2px solid #39b7b1 !important;
+      background: #181a21e6 !important;
+      font-size: 14px;
+      padding: 6px 13px;
+      font-family: 'Marcellus SC', serif;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      box-shadow: 0 2px 8px #10101299;
+    }
+    .leaflet-popup-content {
+      color: #f2efe9 !important;
+      font-size: 15px;
+      font-family: 'Marcellus SC', serif;
+      letter-spacing: 0.01em;
+    }
+    .leaflet-popup-close-button {
+      color: #ffbe7b !important;
+      text-shadow: none !important;
+      font-size: 24px !important;
+      opacity: 0.8 !important;
+    }
+    .leaflet-popup-close-button:hover {
+      color: #e96e36 !important;
+      opacity: 1 !important;
+    }
     @media (prefers-reduced-motion:no-preference){ .flash{animation:flash 1s step-end infinite} }
     @media (prefers-reduced-motion:reduce){ .flash{animation:none} }
     @keyframes flash{50%{opacity:0}}
