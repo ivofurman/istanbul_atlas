@@ -5,30 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Atlas of Everyday Istanbul — Iframe Build</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Exotic font for splash and now also for some map UI -->
+  <!-- Exotic font for splash and map UI -->
   <link href="https://fonts.googleapis.com/css2?family=Marcellus+SC&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f6ede0; /* splash bg */
-      --panel: #fff9f2;
-      --text: #1a2634;
-      --muted: #a9b4d8;
-      --brand: #af2d2d;
-      --highlight: #177e89;
-      --outline: #e6b17b;
-      --accent: #c46c32;
-      --map-card-bg: #fff9f2;
-      --map-card-border: #e6b17b;
-      --map-card-hover: #fcf2e6;
-      --legend-bg: #f6ede0f2;
-      --footer-bg: #f6ede0e6;
-      --footer-text: #55320a;
-      --splash-bg: #f6ede0;
-      --splash-title: #af2d2d;
-      --splash-sub: #1a2634;
-      --splash-bar-bg: #e0d0b6;
-      --splash-bar-fill: linear-gradient(90deg,#af2d2d 0%,#177e89 100%);
-      --splash-glow: 0 0 32px #c46c32cc;
+      /* Darker, higher contrast palette */
+      --bg: #161920;
+      --panel: #232635;
+      --text: #f2efe9;
+      --muted: #a3adc4;
+      --brand: #e96e36;
+      --highlight: #39b7b1;
+      --outline: #403b3b;
+      --accent: #ffbe7b;
+      --map-card-bg: #232635;
+      --map-card-border: #2c2f3a;
+      --map-card-hover: #24293a;
+      --legend-bg: #232635f7;
+      --footer-bg: #232635e8;
+      --footer-text: #f2efe9;
+      /* Splash theme - use same darks */
+      --splash-bg: #181a21;
+      --splash-title: #e96e36;
+      --splash-sub: #f2efe9;
+      --splash-bar-bg: #2c2f3a;
+      --splash-bar-fill: linear-gradient(90deg,#e96e36 0%,#39b7b1 100%);
+      --splash-glow: 0 0 32px #e96e3688;
       --splash-font-title: 'Marcellus SC', serif;
       --splash-font-sub: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
@@ -61,12 +63,12 @@
       font-family: var(--splash-font-title);
       letter-spacing: .03em;
       font-weight: 700;
-      text-shadow: 0 1px 10px #e6b17b33;
+      text-shadow: 0 1px 10px #e96e3636;
     }
     .brand p {
       margin:0;
       font-size:13px;
-      color: var(--footer-text);
+      color: var(--muted);
       font-family: var(--splash-font-sub);
       font-weight: 400;
     }
@@ -79,13 +81,13 @@
       margin:12px 8px;
       cursor:pointer;
       transition:transform .15s, background .15s, box-shadow .2s;
-      box-shadow: 0 4px 16px #c46c3222;
+      box-shadow: 0 4px 16px #181a2138;
       font-family: var(--splash-font-sub);
     }
     .card:hover {
       background:var(--map-card-hover);
       transform: translateY(-1px) scale(1.017);
-      box-shadow: 0 8px 20px #c46c322f;
+      box-shadow: 0 8px 20px #e96e363a;
       border-color: var(--brand);
     }
     .title {
@@ -95,9 +97,10 @@
       margin-bottom:3px;
       color: var(--brand);
       letter-spacing: 0.02em;
+      text-shadow: 0 2px 10px #181a214a;
     }
     .meta {
-      color:var(--splash-sub);
+      color:var(--muted);
       font-size:12.5px;
       font-family: var(--splash-font-sub);
     }
@@ -109,6 +112,7 @@
       color:var(--brand);
       font-family: var(--splash-font-title);
       letter-spacing:0.03em;
+      text-shadow: 0 2px 10px #181a2130;
     }
     .pin-body {
       margin:0 0 8px;
@@ -119,7 +123,7 @@
     }
     .pin-meta {
       font-size:12px;
-      color: #8c5a1e;
+      color: #ffbe7b;
       font-family: var(--splash-font-sub);
     }
     .legend {
@@ -131,7 +135,7 @@
       font-size:13px;
       border:2px solid var(--outline);
       font-family: var(--splash-font-sub);
-      box-shadow: 0 4px 16px #c46c3215;
+      box-shadow: 0 4px 16px #181a2135;
     }
     .footer {
       position:absolute; z-index:500; left:360px; bottom:12px;
@@ -142,7 +146,7 @@
       border-radius:12px;
       border: 2px solid var(--outline);
       font-family: var(--splash-font-sub);
-      box-shadow: 0 2px 8px #c46c3212;
+      box-shadow: 0 2px 8px #181a2118;
     }
     @media (max-width:900px){
       .wrap{ grid-template-columns:1fr }
@@ -162,29 +166,29 @@
       font-family: var(--splash-font-sub);
       font-weight: 600;
       letter-spacing: 0.01em;
-      box-shadow: 0 1px 4px #c46c3230;
+      box-shadow: 0 1px 4px #181a2120;
     }
     .btn-ambient:hover { filter: brightness(1.08); }
-    .amb-note { font-size:12px; color:#177e89; margin-top:6px; }
+    .amb-note { font-size:12px; color:var(--highlight); margin-top:6px; }
     .ist-pin { border:0; background:transparent; }
     .ist-pin .pin {
       position:relative;
       width:36px; height:36px; border-radius:12px;
-      background: var(--brand, #7aa2ff);
+      background: var(--brand, #e96e36);
       display:grid; place-items:center;
-      box-shadow:0 6px 14px #af2d2d25, inset 0 0 0 1.5px #c46c3233;
+      box-shadow:0 6px 14px #181a213a, inset 0 0 0 1.5px #e96e3630;
     }
     .ist-pin .pin::after {
       content:"";
       position:absolute; left:50%; bottom:-8px;
       transform:translateX(-50%) rotate(45deg);
       width:14px; height:14px;
-      background:var(--brand,#7aa2ff);
-      box-shadow:2px 2px 8px #c46c3218;
+      background:var(--brand,#e96e36);
+      box-shadow:2px 2px 8px #181a2110;
       border-radius:4px;
     }
-    .ist-pin .glyph { font-size:18px; filter: drop-shadow(0 1px 1px #c46c3222); }
-    /* Splash overlay styles (unchanged) */
+    .ist-pin .glyph { font-size:18px; filter: drop-shadow(0 1px 1px #181a2135); }
+    /* Splash overlay styles */
     #intro-overlay {
       position:fixed; inset:0;
       background:var(--splash-bg);
@@ -192,7 +196,7 @@
       z-index:3000;
       color:var(--splash-title);
       font-family: var(--splash-font-title);
-      box-shadow:inset 0 0 0 3px #af2d2d33;
+      box-shadow:inset 0 0 0 3px #e96e3633;
       transition: background 0.7s;
     }
     #intro-overlay .inner {
@@ -202,10 +206,10 @@
       max-width: 540px;
       margin:0 auto;
       padding:38px 30px 38px 30px;
-      background: rgba(255,255,255,0.97);
+      background: rgba(35,38,53,0.98);
       border-radius: 28px;
       box-shadow: var(--splash-glow);
-      border: 2.5px solid #e6b17b;
+      border: 2.5px solid #e96e36;
     }
     #intro-overlay h2 {
       font-family: var(--splash-font-title);
@@ -214,7 +218,7 @@
       color: var(--splash-title);
       letter-spacing: 0.01em;
       font-weight:900;
-      text-shadow: 0 2px 18px #e6b17b33;
+      text-shadow: 0 2px 18px #e96e3633;
     }
     #intro-overlay .subtitle {
       font-family: var(--splash-font-sub);
@@ -223,12 +227,12 @@
       color:var(--splash-sub);
       font-weight:600;
       letter-spacing:0.01em;
-      text-shadow: 0 1px 10px #fff7;
+      text-shadow: 0 1px 10px #10101244;
     }
     #intro-overlay .desc {
       font-family: var(--splash-font-sub);
       font-size:1.06rem;
-      color:#55320a;
+      color:#ffe1bf;
       margin:0 0 1.7rem 0;
       font-weight:400;
       letter-spacing:0.02em;
@@ -240,8 +244,8 @@
       background: var(--splash-bar-bg);
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 2px 12px #c46c32bb;
-      border: 1.5px solid #e6b17b;
+      box-shadow: 0 2px 12px #181a213a;
+      border: 1.5px solid #e96e36;
       position: relative;
       display: block;
     }
@@ -251,7 +255,7 @@
       background: var(--splash-bar-fill);
       border-radius: 8px;
       transition: width 0s;
-      box-shadow: 0 0 10px #c46c3288 inset;
+      box-shadow: 0 0 10px #e96e3633 inset;
     }
     @media (prefers-reduced-motion:no-preference){ .flash{animation:flash 1s step-end infinite} }
     @media (prefers-reduced-motion:reduce){ .flash{animation:none} }
@@ -295,7 +299,7 @@
 
     // Helpers
     const nl2br = (s='') => String(s).replace(/\n/g, '<br>');
-    const defaultIconSpec = { glyph:'📍', color:'#7aa2ff' };
+    const defaultIconSpec = { glyph:'📍', color:'#e96e36' };
 
     // One-media-per-pin demo content
     const pins = [
