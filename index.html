@@ -5,15 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Atlas of Everyday Istanbul — Iframe Build</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Add a more exotic font for the splash (Marcellus SC for "My Istanbul") -->
+  <!-- Exotic font for splash and now also for some map UI -->
   <link href="https://fonts.googleapis.com/css2?family=Marcellus+SC&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:#0b1020;
-      --panel:#121a33;
-      --text:#e9eefc;
-      --muted:#a9b4d8;
-      /* Splash theme */
+      --bg: #f6ede0; /* splash bg */
+      --panel: #fff9f2;
+      --text: #1a2634;
+      --muted: #a9b4d8;
+      --brand: #af2d2d;
+      --highlight: #177e89;
+      --outline: #e6b17b;
+      --accent: #c46c32;
+      --map-card-bg: #fff9f2;
+      --map-card-border: #e6b17b;
+      --map-card-hover: #fcf2e6;
+      --legend-bg: #f6ede0f2;
+      --footer-bg: #f6ede0e6;
+      --footer-text: #55320a;
       --splash-bg: #f6ede0;
       --splash-title: #af2d2d;
       --splash-sub: #1a2634;
@@ -23,35 +32,159 @@
       --splash-font-title: 'Marcellus SC', serif;
       --splash-font-sub: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
-    html, body { height:100%; margin:0; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; }
-    .wrap { display:grid; grid-template-columns:340px 1fr; height:100%; }
-    #sidebar { background:var(--panel); border-right:1px solid rgba(255,255,255,.06); overflow:auto; }
+    html, body {
+      height:100%; margin:0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--splash-font-sub);
+    }
+    .wrap {
+      display:grid; grid-template-columns:340px 1fr; height:100%;
+      background: var(--bg);
+    }
+    #sidebar {
+      background:var(--panel);
+      border-right:2px solid var(--outline);
+      overflow:auto;
+      font-family: var(--splash-font-sub);
+    }
     #map { height:100%; width:100%; }
-    .brand { padding:16px 16px 8px; border-bottom:1px solid rgba(255,255,255,.06); }
-    .brand h1 { font-size:18px; margin:0 0 6px; }
-    .brand p { margin:0; font-size:12px; color:var(--muted); }
-    .list { padding:8px 8px 20px; }
-    .card { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:12px; margin:10px 8px; cursor:pointer; transition:transform .15s, background .15s; }
-    .card:hover { background:rgba(255,255,255,.06); transform: translateY(-1px); }
-    .title { font-weight:600; font-size:14px; margin-bottom:4px; }
-    .meta { color:var(--muted); font-size:12px; }
+    .brand {
+      padding:18px 18px 10px;
+      border-bottom:2px solid var(--outline);
+      background: var(--map-card-bg);
+    }
+    .brand h1 {
+      font-size:22px;
+      margin:0 0 7px;
+      color: var(--brand);
+      font-family: var(--splash-font-title);
+      letter-spacing: .03em;
+      font-weight: 700;
+      text-shadow: 0 1px 10px #e6b17b33;
+    }
+    .brand p {
+      margin:0;
+      font-size:13px;
+      color: var(--footer-text);
+      font-family: var(--splash-font-sub);
+      font-weight: 400;
+    }
+    .list { padding:10px 10px 24px; }
+    .card {
+      background: var(--map-card-bg);
+      border:2px solid var(--map-card-border);
+      border-radius:14px;
+      padding:13px;
+      margin:12px 8px;
+      cursor:pointer;
+      transition:transform .15s, background .15s, box-shadow .2s;
+      box-shadow: 0 4px 16px #c46c3222;
+      font-family: var(--splash-font-sub);
+    }
+    .card:hover {
+      background:var(--map-card-hover);
+      transform: translateY(-1px) scale(1.017);
+      box-shadow: 0 8px 20px #c46c322f;
+      border-color: var(--brand);
+    }
+    .title {
+      font-family: var(--splash-font-title);
+      font-weight:700;
+      font-size:15.5px;
+      margin-bottom:3px;
+      color: var(--brand);
+      letter-spacing: 0.02em;
+    }
+    .meta {
+      color:var(--splash-sub);
+      font-size:12.5px;
+      font-family: var(--splash-font-sub);
+    }
     .leaflet-popup-content { margin:10px; }
-    .pin-title { margin:0 0 6px; font-size:16px; font-weight:700; color:#0b1020; }
-    .pin-body { margin:0 0 8px; font-size:13px; line-height:1.45; color:#0b1020; }
-    .pin-meta { font-size:12px; color:#26304f; }
-    .legend { position:absolute; z-index:500; right:12px; top:12px; background:rgba(255,255,255,.92); border-radius:12px; padding:8px 10px; color:#0b1020; font-size:12px; border:1px solid rgba(0,0,0,.06); pointer-events:none; }
-    .footer { position:absolute; z-index:500; left:360px; bottom:10px; background:rgba(18,26,51,.9); color:var(--muted); font-size:12px; padding:6px 10px; border-radius:10px; }
-    @media (max-width:900px){ .wrap{ grid-template-columns:1fr } #sidebar{ height:42% } #map{ height:58% } .footer{ left:10px } }
-    /* Ambient controls */
-    .btn-ambient { display:inline-block; font:inherit; background:#7aa2ff; color:#0b1020; border:0; padding:8px 10px; border-radius:10px; cursor:pointer; }
-    .btn-ambient:hover { filter: brightness(1.05); }
-    .amb-note { font-size:12px; color:#26304f; margin-top:6px; }
-    /* Emoji DivIcon styling */
+    .pin-title {
+      margin:0 0 6px;
+      font-size:18px;
+      font-weight:700;
+      color:var(--brand);
+      font-family: var(--splash-font-title);
+      letter-spacing:0.03em;
+    }
+    .pin-body {
+      margin:0 0 8px;
+      font-size:14px;
+      line-height:1.5;
+      color:var(--splash-sub);
+      font-family: var(--splash-font-sub);
+    }
+    .pin-meta {
+      font-size:12px;
+      color: #8c5a1e;
+      font-family: var(--splash-font-sub);
+    }
+    .legend {
+      position:absolute; z-index:500; right:16px; top:16px;
+      background:var(--legend-bg);
+      border-radius:14px;
+      padding:10px 16px;
+      color:var(--splash-sub);
+      font-size:13px;
+      border:2px solid var(--outline);
+      font-family: var(--splash-font-sub);
+      box-shadow: 0 4px 16px #c46c3215;
+    }
+    .footer {
+      position:absolute; z-index:500; left:360px; bottom:12px;
+      background:var(--footer-bg);
+      color:var(--footer-text);
+      font-size:13px;
+      padding:8px 14px;
+      border-radius:12px;
+      border: 2px solid var(--outline);
+      font-family: var(--splash-font-sub);
+      box-shadow: 0 2px 8px #c46c3212;
+    }
+    @media (max-width:900px){
+      .wrap{ grid-template-columns:1fr }
+      #sidebar{ height:42% }
+      #map{ height:58% }
+      .footer{ left:10px }
+    }
+    .btn-ambient {
+      display:inline-block;
+      font:inherit;
+      background: var(--highlight);
+      color: #fff;
+      border:0;
+      padding:8px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-family: var(--splash-font-sub);
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      box-shadow: 0 1px 4px #c46c3230;
+    }
+    .btn-ambient:hover { filter: brightness(1.08); }
+    .amb-note { font-size:12px; color:#177e89; margin-top:6px; }
     .ist-pin { border:0; background:transparent; }
-    .ist-pin .pin { position:relative; width:36px; height:36px; border-radius:12px; background: var(--pin, #7aa2ff); display:grid; place-items:center; box-shadow:0 6px 14px rgba(0,0,0,.25), inset 0 0 0 1.5px rgba(0,0,0,.06); }
-    .ist-pin .pin::after { content:""; position:absolute; left:50%; bottom:-8px; transform:translateX(-50%) rotate(45deg); width:14px; height:14px; background:var(--pin,#7aa2ff); box-shadow:2px 2px 8px rgba(0,0,0,.10); border-radius:4px; }
-    .ist-pin .glyph { font-size:18px; filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
-    /* Splash overlay styles */
+    .ist-pin .pin {
+      position:relative;
+      width:36px; height:36px; border-radius:12px;
+      background: var(--brand, #7aa2ff);
+      display:grid; place-items:center;
+      box-shadow:0 6px 14px #af2d2d25, inset 0 0 0 1.5px #c46c3233;
+    }
+    .ist-pin .pin::after {
+      content:"";
+      position:absolute; left:50%; bottom:-8px;
+      transform:translateX(-50%) rotate(45deg);
+      width:14px; height:14px;
+      background:var(--brand,#7aa2ff);
+      box-shadow:2px 2px 8px #c46c3218;
+      border-radius:4px;
+    }
+    .ist-pin .glyph { font-size:18px; filter: drop-shadow(0 1px 1px #c46c3222); }
+    /* Splash overlay styles (unchanged) */
     #intro-overlay {
       position:fixed; inset:0;
       background:var(--splash-bg);
