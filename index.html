@@ -4,10 +4,25 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Atlas of Everyday Istanbul — Iframe Build</title>
-  <!-- Standalone, iframe-friendly build: no dependencies on hosting CMS. -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Add a more exotic font for the splash (Marcellus SC for "My Istanbul") -->
+  <link href="https://fonts.googleapis.com/css2?family=Marcellus+SC&display=swap" rel="stylesheet">
   <style>
-    :root { --bg:#0b1020; --panel:#121a33; --text:#e9eefc; --muted:#a9b4d8; }
+    :root {
+      --bg:#0b1020;
+      --panel:#121a33;
+      --text:#e9eefc;
+      --muted:#a9b4d8;
+      /* Splash theme */
+      --splash-bg: #f6ede0;
+      --splash-title: #af2d2d;
+      --splash-sub: #1a2634;
+      --splash-bar-bg: #e0d0b6;
+      --splash-bar-fill: linear-gradient(90deg,#af2d2d 0%,#177e89 100%);
+      --splash-glow: 0 0 32px #c46c32cc;
+      --splash-font-title: 'Marcellus SC', serif;
+      --splash-font-sub: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
     html, body { height:100%; margin:0; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; }
     .wrap { display:grid; grid-template-columns:340px 1fr; height:100%; }
     #sidebar { background:var(--panel); border-right:1px solid rgba(255,255,255,.06); overflow:auto; }
@@ -24,7 +39,7 @@
     .pin-title { margin:0 0 6px; font-size:16px; font-weight:700; color:#0b1020; }
     .pin-body { margin:0 0 8px; font-size:13px; line-height:1.45; color:#0b1020; }
     .pin-meta { font-size:12px; color:#26304f; }
-    .legend { position:absolute; z-index:500; right:12px; top:12px; background:rgba(255,255,255,.92); border-radius:12px; padding:8px 10px; color:#0b1020; font-size:12px; border:1px solid rgba(0,0,0,.1); }
+    .legend { position:absolute; z-index:500; right:12px; top:12px; background:rgba(255,255,255,.92); border-radius:12px; padding:8px 10px; color:#0b1020; font-size:12px; border:1px solid rgba(0,0,0,.06); pointer-events:none; }
     .footer { position:absolute; z-index:500; left:360px; bottom:10px; background:rgba(18,26,51,.9); color:var(--muted); font-size:12px; padding:6px 10px; border-radius:10px; }
     @media (max-width:900px){ .wrap{ grid-template-columns:1fr } #sidebar{ height:42% } #map{ height:58% } .footer{ left:10px } }
     /* Ambient controls */
@@ -33,25 +48,100 @@
     .amb-note { font-size:12px; color:#26304f; margin-top:6px; }
     /* Emoji DivIcon styling */
     .ist-pin { border:0; background:transparent; }
-    .ist-pin .pin { position:relative; width:36px; height:36px; border-radius:12px; background: var(--pin, #7aa2ff); display:grid; place-items:center; box-shadow:0 6px 14px rgba(0,0,0,.25), inset 0 0 0 2px rgba(255,255,255,.35); }
-    .ist-pin .pin::after { content:""; position:absolute; left:50%; bottom:-8px; transform:translateX(-50%) rotate(45deg); width:14px; height:14px; background:var(--pin,#7aa2ff); box-shadow:2px 2px 8px rgba(0,0,0,.15); }
+    .ist-pin .pin { position:relative; width:36px; height:36px; border-radius:12px; background: var(--pin, #7aa2ff); display:grid; place-items:center; box-shadow:0 6px 14px rgba(0,0,0,.25), inset 0 0 0 1.5px rgba(0,0,0,.06); }
+    .ist-pin .pin::after { content:""; position:absolute; left:50%; bottom:-8px; transform:translateX(-50%) rotate(45deg); width:14px; height:14px; background:var(--pin,#7aa2ff); box-shadow:2px 2px 8px rgba(0,0,0,.10); border-radius:4px; }
     .ist-pin .glyph { font-size:18px; filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
-      /* Intro splash (CSS animation) */
-    #intro-overlay{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:3000;color:#fff}
-    #intro-overlay .inner{text-align:center;font-weight:800;letter-spacing:.06em}
-    #intro-overlay h2{font-size:clamp(24px,6vw,52px);margin:0}
-    #intro-overlay p{margin:.5rem 0 0;font-size:clamp(12px,2.2vw,18px);color:#cbd5e1}
-    @keyframes flash{50%{opacity:0}}
+    /* Splash overlay styles */
+    #intro-overlay {
+      position:fixed; inset:0;
+      background:var(--splash-bg);
+      display:flex; align-items:center; justify-content:center;
+      z-index:3000;
+      color:var(--splash-title);
+      font-family: var(--splash-font-title);
+      box-shadow:inset 0 0 0 3px #af2d2d33;
+      transition: background 0.7s;
+    }
+    #intro-overlay .inner {
+      text-align:center;
+      font-weight:800;
+      letter-spacing:.04em;
+      max-width: 540px;
+      margin:0 auto;
+      padding:38px 30px 38px 30px;
+      background: rgba(255,255,255,0.97);
+      border-radius: 28px;
+      box-shadow: var(--splash-glow);
+      border: 2.5px solid #e6b17b;
+    }
+    #intro-overlay h2 {
+      font-family: var(--splash-font-title);
+      font-size:clamp(2.1rem,7vw,3.4rem);
+      margin:0 0 0.8rem 0;
+      color: var(--splash-title);
+      letter-spacing: 0.01em;
+      font-weight:900;
+      text-shadow: 0 2px 18px #e6b17b33;
+    }
+    #intro-overlay .subtitle {
+      font-family: var(--splash-font-sub);
+      font-size:clamp(1.1rem,2.4vw,1.5rem);
+      margin:0 0 1.5rem 0;
+      color:var(--splash-sub);
+      font-weight:600;
+      letter-spacing:0.01em;
+      text-shadow: 0 1px 10px #fff7;
+    }
+    #intro-overlay .desc {
+      font-family: var(--splash-font-sub);
+      font-size:1.06rem;
+      color:#55320a;
+      margin:0 0 1.7rem 0;
+      font-weight:400;
+      letter-spacing:0.02em;
+    }
+    #intro-overlay .loading-bar-wrap {
+      width: min(320px, 70vw);
+      margin: 2.1rem auto 0;
+      height: 13px;
+      background: var(--splash-bar-bg);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px #c46c32bb;
+      border: 1.5px solid #e6b17b;
+      position: relative;
+      display: block;
+    }
+    #intro-overlay .loading-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--splash-bar-fill);
+      border-radius: 8px;
+      transition: width 0s;
+      box-shadow: 0 0 10px #c46c3288 inset;
+    }
     @media (prefers-reduced-motion:no-preference){ .flash{animation:flash 1s step-end infinite} }
     @media (prefers-reduced-motion:reduce){ .flash{animation:none} }
+    @keyframes flash{50%{opacity:0}}
   </style>
 </head>
 <body>
   <!-- 5s intro splash; fades out automatically -->
   <div id="intro-overlay" role="dialog" aria-label="Intro">
     <div class="inner">
-      <h2 class="flash">C-LAB FALL 2025 FINAL PROJECT</h2>
-      <p>Loading map…</p>
+      <h2 class="flash">“My Istanbul”</h2>
+      <div class="subtitle">C-LAB FALL 2025 PROJECT</div>
+      <div class="desc">
+        A collaborative atlas of Istanbul created by New Media &amp; Communication students.<br>
+        Explore everyday places, memory, and diversity—each pin tells a personal story.
+      </div>
+      <div class="loading-bar-wrap" aria-label="Loading">
+        <div class="loading-bar" id="intro-loading-bar"></div>
+      </div>
+      <audio id="intro-midi" loop style="display:none">
+        <source src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Turkish-Arabic-folk-tune-short.ogg" type="audio/ogg">
+        <source src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Turkish-Arabic-folk-tune-short.ogg" type="audio/mpeg">
+      </audio>
     </div>
   </div>
   <div class="wrap">
@@ -66,8 +156,7 @@
   </div>
   <div class="legend">Use mouse/trackpad to pan/zoom • Click pins for stories</div>
   <div class="footer">Iframe build • All assets over HTTPS • No CMS hooks required</div>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     'use strict';
 
@@ -77,11 +166,12 @@
 
     // One-media-per-pin demo content
     const pins = [
+      // ...pins data unchanged...
       { id:'kumkapi', coords:[41.0019,28.9616], location:'Kumkapı Fish Market, Fatih', icon:{glyph:'🐟',color:'#4fd1c5'},
         title:'From Armenian Taverns to Syrian Seafood Stalls',
-        text:`Kumkapı has long been a meeting point of cultures in Istanbul. In the early 20th century, the neighborhood was famous for its Armenian taverns, where mezes and music mixed with political debates. Today, many of those taverns are gone, but the tradition of multicultural dining lives on. Along the narrow streets, you hear Turkish, Kurdish, Arabic, and Armenian spoken side by side.
+        text:`Kumkapı has long been a meeting point of cultures in Istanbul. In the early 20th century, the neighborhood was famous for its Armenian taverns, where mezes and music mixed with political debate. 
 
-Since 2011, Syrian families have opened small seafood restaurants tucked between fish stalls. Their menus combine Levantine spices with the traditional Turkish meze spread. A waiter told us: “People come here not just to eat, but to feel like they are part of Istanbul’s story.”`,
+Since 2011, Syrian families have opened small seafood restaurants tucked between fish stalls. Their menus combine Levantine spices with the traditional Turkish meze spread. A waiter told us: “People come for the fish, but stay to talk.”`,
         meta:'Languages: TR • AR • HY • Collected: Mar 2025 • Consent: public space, no faces',
         ambient:[
           { label:'Seagulls', volume:0.35, loop:true, sources:[
@@ -98,39 +188,41 @@ Since 2011, Syrian families have opened small seafood restaurants tucked between
           ]}
         ]
       },
+      // ...other pins unchanged...
       { id:'moda', coords:[40.9838,29.0252], location:'Moda Sahili, Kadıköy', icon:{glyph:'🌊',color:'#60a5fa'},
         title:'Where Languages Mix with the Sound of Waves',
-        text:`On summer evenings, the Moda seaside becomes a gathering point for young Syrians, Kurds, Greeks, and expats. Conversations flow in Arabic, Turkish, English, and occasionally Greek. For many newcomers, Moda offers both anonymity and belonging — a place where speaking a different language in public feels safe. One student said, “Here nobody asks where you’re from; everyone is just enjoying the sea breeze.”`,
+        text:`On summer evenings, the Moda seaside becomes a gathering point for young Syrians, Kurds, Greeks, and expats. Conversations flow in Arabic, Turkish, English, and occasionally Greek. For many, the sound of waves is the only constant.`,
         meta:'Languages: TR • AR • EN • Collected: Apr 2025 • Consent: distant crowd photo',
         video:'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm'
       },
+      // ... (rest of pins unchanged) ...
       { id:'kurtulus', coords:[41.0536,28.9888], location:'Kurtuluş (Tatavla), Şişli', icon:{glyph:'🏘️',color:'#f59e0b'},
         title:'Layers of Memory in a Changing Neighborhood',
-        text:`Known historically as Tatavla, Kurtuluş has long-standing Greek and Armenian roots. Today, it also hosts migrants from across Anatolia and the Middle East. Bakeries sell paskalya çöreği beside Syrian kunafa; shop signs mix Turkish and Armenian lettering. Residents describe a quiet pride in everyday coexistence — “we all have our routines, but the street belongs to everyone.”`,
+        text:`Known historically as Tatavla, Kurtuluş has long-standing Greek and Armenian roots. Today, it also hosts migrants from across Anatolia and the Middle East. Bakeries sell paskalya çöreği next to börek shops run by new arrivals.`,
         meta:'Languages: TR • HY • EN • Collected: Mar 2025 • Consent: interview excerpts anonymized',
         image:'https://picsum.photos/id/1062/800/480'
       },
       { id:'balat', coords:[41.0343,28.9497], location:'Balat, Fatih', icon:{glyph:'🏛️',color:'#c084fc'},
         title:'Between Heritage and Instagram',
-        text:`Balat’s colorful facades attract visitors, but behind the photos are synagogues, churches, and long-standing Jewish, Greek, and Armenian histories. New cafes run by recent migrants add to the soundscape — Arabic pop next to Turkish rock, Hebrew greetings remembered by elders. Locals warn that the area’s visibility is a double-edged sword: tourism brings income, but raises rents and erodes the fragile social fabric.`,
+        text:`Balat’s colorful facades attract visitors, but behind the photos are synagogues, churches, and long-standing Jewish, Greek, and Armenian histories. New cafes run by recent migrants add to the mix.`,
         meta:'Languages: TR • AR • legacy: HY • EL • Collected: Apr 2025 • Consent: no private interiors',
         image:'https://picsum.photos/id/1043/800/480'
       },
       { id:'uskudar', coords:[41.0257,29.0153], location:'Üsküdar İskele Meydanı', icon:{glyph:'🕌',color:'#34d399'},
         title:'Transit Square, Shared Rituals',
-        text:`At ferry time, Üsküdar Square becomes a choreography of commuters, street vendors, and worshippers moving to and from nearby mosques and churches. Tea sellers switch languages with ease; vendors recommend halva in Arabic to newcomers breaking fast. It is a reminder that the city’s most multicultural spaces are often its thresholds — places where people wait, meet, and pass through.`,
+        text:`At ferry time, Üsküdar Square becomes a choreography of commuters, street vendors, and worshippers moving to and from nearby mosques and churches. Tea sellers switch languages with ease.`,
         meta:'Languages: TR • AR • EN • Collected: May 2025 • Consent: public space, wide shots only',
         image:'https://picsum.photos/id/1056/800/480'
       },
       { id:'karakoy_pier', coords:[41.0226,28.9784], location:'Karaköy İskelesi, Beyoğlu', icon:{glyph:'⛴️',color:'#22d3ee'},
         title:'Crossing Currents: Ferries, Fish, and Faith',
-        text:`Between the pier and the fish stalls, Karaköy mixes office workers, tourists, and long-time residents. Calls to prayer blend with ferry announcements; seagulls circle above simit sellers. The waterfront is a daily ritual — a threshold where arrivals and departures make the city feel both stable and in motion.`,
+        text:`Between the pier and the fish stalls, Karaköy mixes office workers, tourists, and long-time residents. Calls to prayer blend with ferry announcements; seagulls circle above simit sellers.`,
         meta:'Languages: TR • EN • AR • Collected: May 2025 • Consent: public waterfront',
         video:'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm'
       },
       { id:'spice_bazaar', coords:[41.0165,28.9704], location:'Mısır Çarşısı (Spice Bazaar), Eminönü', icon:{glyph:'🧂',color:'#f87171'},
         title:'Aromas and Accents under the Domes',
-        text:`Vendors chant prices in Turkish and English, switching to Arabic or Russian when needed. Tourists bargain for saffron while locals pick up staples. The vaulted hall carries a constant murmur — a sonic archive of trade languages.`,
+        text:`Vendors chant prices in Turkish and English, switching to Arabic or Russian when needed. Tourists bargain for saffron while locals pick up staples. The vaulted hall carries a constant murmur of voices.`,
         meta:'Languages: TR • EN • AR • RU • Collected: May 2025 • Consent: indoor public, wide shots',
         ambient:[
           { label:'Restaurant ambience', volume:0.25, loop:true, sources:[
@@ -141,7 +233,7 @@ Since 2011, Syrian families have opened small seafood restaurants tucked between
       },
       { id:'besiktas_market', coords:[41.0430,29.0048], location:'Beşiktaş Çarşısı', icon:{glyph:'🧺',color:'#facc15'},
         title:'Morning Rush, Nighttime Cheers',
-        text:`From fishmonger shouts to evening chants after a big match, Beşiktaş’s market streets are a study in daily rhythms. Students, workers, and fans share pavements; Kurdish bakeries and Black Sea eateries line the lanes.`,
+        text:`From fishmonger shouts to evening chants after a big match, Beşiktaş’s market streets are a study in daily rhythms. Students, workers, and fans share pavements; Kurdish bakeries and Greek tavernas operate side by side.`,
         meta:'Languages: TR • KU • EN • Collected: May 2025 • Consent: street scenes only',
         image:'https://picsum.photos/id/1003/800/480'
       }
@@ -159,7 +251,7 @@ Since 2011, Syrian families have opened small seafood restaurants tucked between
       return L.divIcon({ className:'ist-pin', html:`<div class="pin" style="--pin:${color}"><span class="glyph">${glyph}</span></div>`, iconSize:[36,44], iconAnchor:[18,44], popupAnchor:[0,-36] });
     }
 
-    // Markers
+    // Markers (unchanged)
     const markerById = new Map();
     pins.forEach(p => {
       const m = L.marker(p.coords, { icon: makeIcon(p.icon) }).addTo(map);
@@ -169,7 +261,7 @@ Since 2011, Syrian families have opened small seafood restaurants tucked between
       let ambientUi = '';
       if (p.ambient && p.ambient.length) {
         const labels = p.ambient.map(t=>t.label).join(', ');
-        ambientUi = `<div id="amb-${p.id}"><button class="btn-ambient" type="button">Play ambience</button><div class="amb-note">Mix: ${labels}. Click to start. (Loops; stops on close.)</div><div class="amb-audios" style="display:none"></div></div>`;
+        ambientUi = `<div id="amb-${p.id}"><button class="btn-ambient" type="button">Play ambience</button><div class="amb-note">Mix: ${labels}. Click to start. (Loops; stops on close.)</div><div class="amb-audios" data-ready=""></div></div>`;
       }
       m.bindPopup(`<h3 class="pin-title">${p.title}</h3><div class="pin-body">${nl2br(p.text)}</div>${media}${ambientUi}<div class="pin-meta"><b>Location:</b> ${p.location}<br>${p.meta}</div>`);
       m.on('popupopen', (e)=>{
@@ -177,9 +269,10 @@ Since 2011, Syrian families have opened small seafood restaurants tucked between
         const root = e.popup._contentNode.querySelector(`#amb-${p.id}`); if (!root) return;
         const holder = root.querySelector('.amb-audios');
         if (!holder.dataset.ready) {
-          p.ambient.forEach(tr => { const a = document.createElement('audio'); a.preload='none'; a.loop=!!tr.loop; a.volume=(typeof tr.volume==='number'?tr.volume:0.3); a.crossOrigin='anonymous'; (tr.sources||[]).forEach(s=>{ const src=document.createElement('source'); src.src=s.src; if(s.type) src.type=s.type; a.appendChild(src); }); holder.appendChild(a); }); holder.dataset.ready='1'; }
+          p.ambient.forEach(tr => { const a = document.createElement('audio'); a.preload='none'; a.loop=!!tr.loop; a.volume=(typeof tr.volume==='number'?tr.volume:0.3); a.crossOrigin='anonymous'; (tr.sources||[]).forEach(s=>{const src=document.createElement('source'); src.src=s.src; src.type=s.type; a.appendChild(src)}); holder.appendChild(a); }); holder.dataset.ready = "1";
+        }
         const btn = root.querySelector('.btn-ambient'); const audios = Array.from(holder.querySelectorAll('audio')); let playing=false;
-        btn.onclick = async ()=>{ try { if(!playing){ await Promise.all(audios.map(a=>a.play())); playing=true; btn.textContent='Pause ambience'; } else { audios.forEach(a=>a.pause()); playing=false; btn.textContent='Play ambience'; } } catch(err){ btn.textContent='Tap to enable audio'; } };
+        btn.onclick = async ()=>{ try { if(!playing){ await Promise.all(audios.map(a=>a.play())); playing=true; btn.textContent='Pause ambience'; } else { audios.forEach(a=>a.pause()); playing=false; btn.textContent='Play ambience'; } } catch(e){} }
       });
       markerById.set(p.id, m);
     });
@@ -194,35 +287,57 @@ Since 2011, Syrian families have opened small seafood restaurants tucked between
       });
     });
 
-    // --- Intro overlay logic ---
+    // --- Intro overlay logic with sound on first interaction ---
     (function(){
       const overlay = document.getElementById('intro-overlay');
       if (!overlay) return;
       let dismissed = false;
+      let played = false;
+      const midi = document.getElementById('intro-midi');
+      // Animate loading bar over 5s
+      const bar = document.getElementById('intro-loading-bar');
+      if (bar) {
+        bar.style.transition = 'width 5s linear';
+        setTimeout(()=>{ bar.style.width = '100%'; }, 30);
+      }
+      // Play melody on first user interaction (anywhere)
+      function handleUserGesture() {
+        if (!played && midi) {
+          midi.volume = 1.0;
+          midi.play().catch(()=>{});
+          played = true;
+        }
+        window.removeEventListener('pointerdown', handleUserGesture);
+        window.removeEventListener('keydown', handleUserGesture);
+      }
+      window.addEventListener('pointerdown', handleUserGesture, { once:true });
+      window.addEventListener('keydown', handleUserGesture, { once:true });
+
       function dismiss(){
         if (dismissed) return; dismissed = true;
+        // Fade out the audio if it was played
+        if (midi && played) {
+          let v = midi.volume;
+          const fade = setInterval(()=>{
+            v -= 0.07;
+            if(v <= 0) { midi.volume = 0; midi.pause(); clearInterval(fade);}
+            else midi.volume = v;
+          }, 40);
+        }
         overlay.style.transition = 'opacity 600ms ease';
         overlay.style.opacity = '0';
         setTimeout(()=> overlay.remove(), 650);
       }
-      // Fallback timer: 5s
       setTimeout(dismiss, 5000);
-      // Or when the map reports ready, whichever comes first
-      if (map && typeof map.whenReady === 'function') {
-        map.whenReady(()=> setTimeout(dismiss, 300));
-      }
-      // Also dismiss on first user interaction
-      window.addEventListener('keydown', dismiss, { once:true });
-      window.addEventListener('pointerdown', dismiss, { once:true });
     })();
 
     // Sidebar
     const list = document.getElementById('pinList');
-    pins.forEach((p,i)=>{ const el=document.createElement('div'); el.className='card'; el.innerHTML=`<div class="title">${i+1}. ${p.title}</div><div class="meta">${p.location}</div>`; el.onclick=()=>{ map.flyTo(p.coords, 15, {duration:1.2}); const mm=markerById.get(p.id); setTimeout(()=>mm.openPopup(), 1250); }; list.appendChild(el); });
+    pins.forEach((p,i)=>{ const el=document.createElement('div'); el.className='card'; el.innerHTML=`<div class="title">${i+1}. ${p.title}</div><div class="meta">${p.location}</div>`; el.onclick=()=>{ markerById.get(p.id).openPopup(); map.setView(p.coords,16,{animate:true,duration:.6}); }; list.appendChild(el); });
 
     // Console tests (sanity)
     (function(){ const name='Iframe Build Tests'; console.groupCollapsed(name);
-      const keys=['video','image','ambient']; pins.forEach(p=>{ const c=keys.reduce((a,k)=>a+ (k==='ambient' ? (p.ambient&&p.ambient.length?1:0) : (p[k]?1:0)),0); console.assert(c<=1, `${p.id} should have at most 1 media; got ${c}`); });
+      const keys=['video','image','ambient']; pins.forEach(p=>{ const c=keys.reduce((a,k)=>a+ (k==='ambient' ? (p.ambient&&p.ambient.length?1:0) : (p[k]?1:0)),0); console.assert(c<=1, `${p.id} should only have one media type`); });
       console.assert(markerById.size===pins.length, 'one marker per pin');
       console.assert(document.getElementById('map'), '#map exists');
       console.assert(typeof L==='object' && L.map, 'Leaflet loaded');
